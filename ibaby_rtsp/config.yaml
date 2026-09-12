@@ -1,5 +1,5 @@
 name: "iBaby RTSP Bridge"
-version: "0.1.1"
+version: "0.1.2"
 slug: ibaby_rtsp
 description: >-
   Puente RTSP en Python puro para cámaras iBaby M6S (protocolo P2P/PPPP de
@@ -13,6 +13,15 @@ init: false
 host_network: true
 startup: application
 boot: auto
+# Sondeo TCP nativo del Supervisor: si el puerto deja de responder (proceso
+# colgado sin llegar a salir, caso no cubierto por el bucle de reintento de
+# run.sh), Supervisor reinicia el addon solo. El [PORT:8554] solo resuelve
+# contra el puerto de fabrica -- si cambias la opcion rtsp_port, actualiza
+# tambien el numero aqui y en "ports" (limitacion de la plantilla de
+# Supervisor, no lee las opciones del addon).
+ports:
+  8554/tcp: 8554
+watchdog: "tcp://[HOST]:[PORT:8554]"
 options:
   ibaby_email: ""
   ibaby_password: ""
