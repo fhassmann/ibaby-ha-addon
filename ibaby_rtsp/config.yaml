@@ -13,7 +13,6 @@ init: false
 host_network: true
 startup: application
 boot: auto
-watchdog: true
 options:
   ibaby_email: ""
   ibaby_password: ""
