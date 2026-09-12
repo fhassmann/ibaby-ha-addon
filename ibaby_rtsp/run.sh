@@ -26,6 +26,10 @@ if [ "${INSTALLED_VERSION}" != "${PYIBABY_VERSION}" ]; then
     fi
 fi
 
+# Reinstalar (aunque sea la misma version ya horneada) pisa el fichero
+# parcheado por patch_content_base.py -- reaplicar siempre tras esta seccion.
+python3 /patch_content_base.py
+
 bashio::log.info "Arrancando pyibaby.rtspd en el puerto ${RTSP_PORT}, path /${STREAM_NAME}"
 
 # Bucle de reintento: si pyibaby.rtspd cae (camara offline, fallo de red,

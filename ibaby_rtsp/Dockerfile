@@ -10,6 +10,12 @@ RUN apk add --no-cache python3 py3-pip
 ARG PYIBABY_VERSION=0.1.8
 RUN pip3 install --no-cache-dir --break-system-packages "pyibaby==${PYIBABY_VERSION}"
 
+# Fix de un bug de pyibaby (Content-Base sin puerto en el DESCRIBE RTSP, ver
+# patch_content_base.py) -- se reaplica tambien en run.sh tras cualquier
+# reinstalacion en caliente por la opcion pyibaby_version.
+COPY patch_content_base.py /
+RUN python3 /patch_content_base.py
+
 COPY run.sh /
 RUN chmod a+x /run.sh
 
