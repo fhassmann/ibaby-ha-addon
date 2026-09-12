@@ -1,0 +1,6 @@
+build_from:
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.19
+labels:
+  org.opencontainers.image.title: "iBaby RTSP Bridge"
+  org.opencontainers.image.description: "Puente RTSP en Python para camaras iBaby M6S via pyibaby"
+  org.opencontainers.image.source: "https://github.com/fhassmann/ibaby-ha-addon"

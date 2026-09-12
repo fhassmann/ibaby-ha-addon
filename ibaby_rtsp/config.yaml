@@ -1,0 +1,28 @@
+name: "iBaby RTSP Bridge"
+version: "0.1.0"
+slug: ibaby_rtsp
+description: >-
+  Puente RTSP en Python puro para cámaras iBaby M6S (protocolo P2P/PPPP de
+  ThroughTek vía pyibaby). Sirve el vídeo/audio de la cámara como una fuente
+  RTSP estándar para que Home Assistant la consuma con la integración
+  genérica de cámara.
+url: "https://github.com/fhassmann/ibaby-ha-addon"
+arch:
+  - aarch64
+init: false
+host_network: true
+startup: application
+boot: auto
+watchdog: true
+options:
+  ibaby_email: ""
+  ibaby_password: ""
+  rtsp_port: 8554
+  stream_name: "ibaby"
+  pyibaby_version: "0.1.8"
+schema:
+  ibaby_email: str
+  ibaby_password: password
+  rtsp_port: port
+  stream_name: str
+  pyibaby_version: str
