@@ -58,8 +58,17 @@ Settings → Devices & Services → Add Integration → **Generic Camera**, con 
 URL de streaming:
 
 ```
-rtsp://IP_DE_HOME_ASSISTANT:8554/ibaby
+rtsp://127.0.0.1:8554/ibaby
 ```
+
+**Usa `127.0.0.1`, no la IP de LAN de tu HA.** `pyibaby.rtspd` fija ese host
+en el protocolo RTSP que sirve (cabecera `Content-Base`) con independencia
+del host real configurado — limitación conocida de la librería, no de este
+addon. Funciona porque en una instalación HAOS, Home Assistant Core corre en
+el mismo namespace de red que el addon (`host_network: true`), así que
+comparten el mismo `127.0.0.1`. Consumir este stream desde otro dispositivo
+de tu LAN que no sea el propio HA (un NVR, por ejemplo) probablemente no
+funcione por el mismo motivo.
 
 ## Seguridad
 
@@ -69,4 +78,10 @@ router/Internet: solo debe ser accesible desde tu red local.
 ## Aviso
 
 `pyibaby` es un proyecto de ingeniería inversa no oficial, sin relación con
-iBaby Labs ni ThroughTek. Úsalo bajo tu propia responsabilidad.
+iBaby Labs ni ThroughTek. Úsalo bajo tu propia responsabilidad. Probado
+únicamente contra una iBaby M6S concreta — algunas funciones (modo
+privacidad, sensores de CO2/VOC) no están soportadas en ese modelo/firmware.
+
+Proyecto compartido tal cual, sin mantenimiento activo garantizado — ver
+[estado del proyecto](../README.md#estado-del-proyecto) y
+[`LICENSE`](../LICENSE) (MIT) en la raíz del repositorio.
