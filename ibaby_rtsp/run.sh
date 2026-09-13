@@ -1,5 +1,15 @@
 #!/usr/bin/with-contenv bashio
 
+# Desactivar errexit explicitamente: si estuviera activo (heredado del
+# bootstrap de bashio), el "wait" de los bucles de reintento de abajo -- que
+# devuelve el codigo de salida no-cero de un proceso caido -- mataria la
+# subshell entera al instante, sin llegar nunca a la linea que registra el
+# aviso y reintenta. Bug real detectado 2026-09-13: control_bridge.py fallo
+# una vez (sesion P2P en contienda con la de pyibaby.rtspd al arrancar
+# casi a la vez) y el bucle de reintento no volvio a intentarlo nunca mas,
+# silenciosamente, sin ningun error visible en el log.
+set +e
+
 IBABY_EMAIL=$(bashio::config 'ibaby_email')
 IBABY_PASSWORD=$(bashio::config 'ibaby_password')
 RTSP_PORT=$(bashio::config 'rtsp_port')
@@ -113,8 +123,8 @@ rtspd_loop() {
         python3 -u -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" \
             > >(while IFS= read -r line; do echo "$(date '+%H:%M:%S') ${line}"; done) 2>&1 &
         echo $! > "${RTSPD_PIDFILE}"
-        wait "$(cat "${RTSPD_PIDFILE}")"
-        local exit_code=$?
+        local exit_code=0
+        wait "$(cat "${RTSPD_PIDFILE}")" || exit_code=$?
         rm -f "${RTSPD_PIDFILE}"
         local uptime=$(( $(date +%s) - start_ts ))
 
@@ -131,13 +141,19 @@ rtspd_loop() {
 bridge_loop() {
     local retry_delay=10
     local max_retry_delay=300
+    # Retraso inicial: si control_bridge.py pide su sesion P2P casi a la vez
+    # que pyibaby.rtspd (arrancan juntos), la camara puede no responder a
+    # tiempo al handshake (timeout de solo 5s en la libreria) -- dejar que
+    # la sesion de video se asiente primero reduce esa contencion. Solo
+    # afecta al primer intento; los reintentos ya tienen su propio retraso.
+    sleep 8
     while true; do
         local start_ts=$(date +%s)
         python3 -u /control_bridge.py \
             > >(while IFS= read -r line; do echo "$(date '+%H:%M:%S') ${line}"; done) 2>&1 &
         echo $! > "${BRIDGE_PIDFILE}"
-        wait "$(cat "${BRIDGE_PIDFILE}")"
-        local exit_code=$?
+        local exit_code=0
+        wait "$(cat "${BRIDGE_PIDFILE}")" || exit_code=$?
         rm -f "${BRIDGE_PIDFILE}"
         local uptime=$(( $(date +%s) - start_ts ))
 

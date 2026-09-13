@@ -71,9 +71,23 @@ def connect_camera() -> LANCamera:
     cam = next((c for c in cameras if c.is_pppp), None)
     if cam is None:
         raise RuntimeError("No se encontro ninguna camara PPPP en la cuenta")
-    lan = LANCamera(cam).connect()
-    log(f"conectado a {cam.camid} ({cam.p2p_uid}) -- sesion de control/sensores")
-    return lan
+
+    # El handshake P2P tiene un timeout corto (5s en la libreria) y puede
+    # chocar con la sesion de pyibaby.rtspd si ambas piden conectar casi a
+    # la vez al arrancar el addon. Unos reintentos rapidos aqui evitan tener
+    # que reiniciar el proceso entero (y repetir el login en la nube) por
+    # una contencion pasajera de unos segundos.
+    last_error: Exception | None = None
+    for attempt in range(1, 4):
+        try:
+            lan = LANCamera(cam).connect()
+            log(f"conectado a {cam.camid} ({cam.p2p_uid}) -- sesion de control/sensores")
+            return lan
+        except TimeoutError as e:
+            last_error = e
+            log(f"handshake P2P fallo (intento {attempt}/3): {e!r} -- reintentando en 5s")
+            time.sleep(5)
+    raise last_error or RuntimeError("no se pudo conectar tras 3 intentos")
 
 
 def _base_cfg(object_id: str, name: str) -> dict:

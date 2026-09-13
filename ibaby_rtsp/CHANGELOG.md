@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.4
+
+- **Fix crítico**: el bucle de reintento (backoff exponencial de la
+  sección de resiliencia) **no reintentaba nunca** tras el primer fallo de
+  `control_bridge.py` o `pyibaby.rtspd` — se quedaba en silencio para
+  siempre, sin log ni reintento. Causa probable: `errexit` activo (heredado
+  del bootstrap de `bashio`) hacía que el `wait` del proceso caído matara
+  la subshell del bucle al instante, antes de llegar a la línea que
+  registra el aviso y reintenta. Detectado en real: `control_bridge.py`
+  falló una vez por contienda de sesión P2P con `pyibaby.rtspd` al arrancar
+  casi a la vez, y nunca se recuperó solo. Fix: `set +e` explícito al
+  principio de `run.sh` + captura del código de salida con `wait ... ||
+  exit_code=$?` (a prueba de errexit) en los dos bucles.
+- `control_bridge.py` reintenta el handshake P2P internamente (hasta 3
+  veces, 5s entre intentos) antes de tirar el proceso entero — evita
+  reiniciar todo (y repetir el login en la nube) por una contienda de
+  sesión pasajera de unos segundos con `pyibaby.rtspd` al arrancar.
+- `bridge_loop` espera 8s antes de su primer intento de conexión, dando
+  tiempo a que la sesión de vídeo se asiente primero — reduce la
+  probabilidad de chocar con el timeout corto (5s) del handshake.
+
 ## 0.2.3
 
 - El nombre **visible** de las entidades (no solo el topic/unique_id, ya
