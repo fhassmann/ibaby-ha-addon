@@ -90,6 +90,22 @@ def connect_camera() -> LANCamera:
     raise last_error or RuntimeError("no se pudo conectar tras 3 intentos")
 
 
+def probe_privacy_support(lan: LANCamera) -> bool:
+    """El subsistema de proyector/privacidad (GET_PROJECTORLAMP, cmd 5383)
+    no esta soportado por todas las camaras -- confirmado en real
+    2026-09-13: en una M6S, el comando de modo privacidad se envia sin
+    error pero no tiene ningun efecto fisico, y esta consulta nunca
+    responde. En vez de asumir por modelo (camtype no documenta de forma
+    fiable que funciones trae cada uno), se comprueba la capacidad real del
+    dispositivo al conectar: un par de intentos sin respuesta y se da por
+    no soportado, para no publicar una entidad condenada a quedarse en
+    'unknown' para siempre."""
+    for _ in range(2):
+        if lan.get_projector(timeout=4.0) is not None:
+            return True
+    return False
+
+
 def _base_cfg(domain: str, object_id: str, name: str) -> dict:
     """Campos comunes a toda entidad MQTT Discovery de este addon.
 
@@ -117,7 +133,7 @@ def _base_cfg(domain: str, object_id: str, name: str) -> dict:
     }
 
 
-def publish_discovery(client: mqtt.Client) -> None:
+def publish_discovery(client: mqtt.Client, privacy_supported: bool) -> None:
     if SENSORS_ENABLED:
         sensors = [
             ("temperatura", "Temperatura", "°C", "temperature"),
@@ -143,16 +159,17 @@ def publish_discovery(client: mqtt.Client) -> None:
             cfg["command_topic"] = f"{BASE_TOPIC}/button/ptz_{key}/set"
             client.publish(f"homeassistant/button/{object_id}/config", json.dumps(cfg), retain=True)
 
-        object_id = f"{DEVICE_ID}_privacy"
-        cfg = _base_cfg("switch", object_id, "Modo privacidad")
-        cfg["command_topic"] = f"{BASE_TOPIC}/switch/privacy/set"
-        cfg["state_topic"] = f"{BASE_TOPIC}/switch/privacy/state"
-        cfg["payload_on"] = "ON"
-        cfg["payload_off"] = "OFF"
-        client.publish(f"homeassistant/switch/{object_id}/config", json.dumps(cfg), retain=True)
+        if privacy_supported:
+            object_id = f"{DEVICE_ID}_privacy"
+            cfg = _base_cfg("switch", object_id, "Modo privacidad")
+            cfg["command_topic"] = f"{BASE_TOPIC}/switch/privacy/set"
+            cfg["state_topic"] = f"{BASE_TOPIC}/switch/privacy/state"
+            cfg["payload_on"] = "ON"
+            cfg["payload_off"] = "OFF"
+            client.publish(f"homeassistant/switch/{object_id}/config", json.dumps(cfg), retain=True)
 
 
-def make_on_message(lan: LANCamera):
+def make_on_message(lan: LANCamera, privacy_supported: bool):
     def on_message(_client, _userdata, msg: mqtt.MQTTMessage) -> None:
         topic = msg.topic
         payload = msg.payload.decode(errors="replace").strip()
@@ -168,7 +185,7 @@ def make_on_message(lan: LANCamera):
                     log(f"AVISO: fallo enviando PTZ {key}: {e!r}")
                 return
 
-        if topic == f"{BASE_TOPIC}/switch/privacy/set":
+        if topic == f"{BASE_TOPIC}/switch/privacy/set" and privacy_supported:
             on = payload.upper() == "ON"
             log(f"modo privacidad -> {'ON' if on else 'OFF'}")
             try:
@@ -186,21 +203,27 @@ def main() -> int:
 
     lan = connect_camera()
 
+    privacy_supported = False
+    if PTZ_ENABLED:
+        privacy_supported = probe_privacy_support(lan)
+        log(f"modo privacidad: {'soportado' if privacy_supported else 'NO soportado por esta camara -- switch no publicado'}")
+
     client = mqtt.Client(client_id=f"{DEVICE_ID}_control_bridge")
     if MQTT_USERNAME:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.will_set(AVAILABILITY_TOPIC, "offline", retain=True)
-    client.on_message = make_on_message(lan)
+    client.on_message = make_on_message(lan, privacy_supported)
 
     client.connect(MQTT_HOST, MQTT_PORT, keepalive=30)
     client.loop_start()
 
     client.publish(AVAILABILITY_TOPIC, "online", retain=True)
-    publish_discovery(client)
+    publish_discovery(client, privacy_supported)
 
     if PTZ_ENABLED:
         client.subscribe(f"{BASE_TOPIC}/button/+/set")
-        client.subscribe(f"{BASE_TOPIC}/switch/privacy/set")
+        if privacy_supported:
+            client.subscribe(f"{BASE_TOPIC}/switch/privacy/set")
 
     log(f"listo (sensores={'on' if SENSORS_ENABLED else 'off'}, ptz={'on' if PTZ_ENABLED else 'off'})")
 
@@ -220,7 +243,7 @@ def main() -> int:
             else:
                 time.sleep(15.0)
 
-            if PTZ_ENABLED:
+            if PTZ_ENABLED and privacy_supported:
                 # Sincroniza el estado real del switch (por si se cambio desde
                 # la app oficial de iBaby, no solo desde HA).
                 proj = lan.get_projector(timeout=4.0)

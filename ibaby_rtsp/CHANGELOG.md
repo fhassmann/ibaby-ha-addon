@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.6
+
+- **Validado en real (M6S física del usuario): los 4 botones PTZ mueven la
+  cámara de verdad.**
+- **`switch.ibaby_privacy` retirado por autodetección de hardware**:
+  confirmado en real que en esta M6S el comando de modo privacidad se envía
+  sin error pero no tiene ningún efecto físico, y la consulta de estado
+  (`GET_PROJECTORLAMP`) nunca responde — mismo patrón que CO2/VOC (M7-only).
+  En vez de asumir por modelo de cámara (poco fiable), `control_bridge.py`
+  ahora **prueba la capacidad real al conectar** (`probe_privacy_support()`,
+  2 intentos a `get_projector()`): si no responde, no publica el switch en
+  absoluto (evita una entidad condenada a quedarse en `unknown` para
+  siempre) ni sigue sondeando ese comando en el bucle. Si algún día se usa
+  con una cámara que sí lo soporte, el switch aparecerá solo.
+- Los 4 sensores y los 4 botones PTZ siguen igual, confirmados funcionando.
+
 ## 0.2.5
 
 - **Fix**: las entidades aparecían en HA con `entity_id` largo y
