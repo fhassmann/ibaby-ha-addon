@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2
+
+- Los topics MQTT y el `unique_id`/nombre de dispositivo de `control_bridge.py`
+  usan ahora la opción `stream_name` (la misma que el path RTSP, ej. `ibaby`)
+  en vez de un identificador fijo (`ibaby_m6s`). Topics antes:
+  `ibaby_rtsp/ibaby_m6s/...`; ahora: `ibaby_rtsp/<stream_name>/...`. Si ya
+  tenías las entidades creadas con el nombre anterior, quedan huérfanas en
+  HA (bórralas a mano) — las nuevas aparecen solas con el nombre correcto.
+
 ## 0.2.1
 
 - MQTT desacoplado de la integración MQTT concreta de esta instalación:

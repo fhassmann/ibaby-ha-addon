@@ -14,6 +14,7 @@ MQTT_PASSWORD_OPT=$(bashio::config 'mqtt_password')
 
 export IBABY_EMAIL
 export IBABY_PASSWORD
+export STREAM_NAME
 export SENSORS_ENABLED
 export PTZ_ENABLED
 

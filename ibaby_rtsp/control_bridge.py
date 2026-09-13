@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 
@@ -35,7 +36,12 @@ MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.environ.get("MQTT_USERNAME") or None
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD") or None
 
-DEVICE_ID = "ibaby_m6s"
+# Mismo nombre que la opcion stream_name (el path RTSP, ej. "ibaby") para que
+# topics MQTT y unique_id de las entidades queden bajo un unico nombre
+# configurable, coherente con el resto del addon -- no un identificador fijo
+# aparte. Saneado a lo que MQTT/HA aceptan en un topic/unique_id.
+_stream_name = os.environ.get("STREAM_NAME", "ibaby").strip() or "ibaby"
+DEVICE_ID = re.sub(r"[^a-zA-Z0-9_-]", "_", _stream_name).lower()
 BASE_TOPIC = f"ibaby_rtsp/{DEVICE_ID}"
 AVAILABILITY_TOPIC = f"{BASE_TOPIC}/status"
 
@@ -49,7 +55,7 @@ PTZ_NUDGE_S = 0.4  # duracion del movimiento por pulsacion antes de mandar STOP
 
 DEVICE_INFO = {
     "identifiers": [DEVICE_ID],
-    "name": "iBaby M6S",
+    "name": f"iBaby M6S ({_stream_name})",
     "manufacturer": "iBaby",
     "model": "M6S",
 }
