@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.8
+
+- **Errores de login/conexión legibles, sin traceback.** Motivado por un
+  incidente real: `ibaby_email`/`ibaby_password` mal configurados (valores
+  ajenos, probablemente por autofill del navegador al guardar
+  Configuration) daban un traceback completo de Python
+  (`pyibaby.cloud.CloudError: ... status=10105 msg='Email format error'`)
+  en vez de un aviso claro. Ahora tanto `pyibaby.rtspd`
+  (`patch_friendly_login_errors.py`, mismo patrón que los otros dos
+  parches) como `control_bridge.py` (código propio) capturan el fallo al
+  conectar y loguean una sola línea: `no se pudo conectar con la cámara
+  (...) -- revisa ibaby_email/ibaby_password en la configuración del
+  addon`. Mismo código de salida (1) — el bucle de reintento de `run.sh`
+  sigue funcionando igual.
+- `patch_stream_quality.py`: fix de un bug de idempotencia propio —
+  comprobaba si el bloque completo seguía intacto, pero
+  `patch_friendly_login_errors.py` (aplicado después) lo reescribe con un
+  `try/except` alrededor, así que en cada arranque normal (sin reinstalar
+  `pyibaby`) daba un aviso falso de "no parcheado". Ahora comprueba solo la
+  línea del flag `--quality`, que ningún otro parche toca.
+
 ## 0.2.7
 
 - **Nueva opción `stream_quality`** para bajar la resolución/bitrate del

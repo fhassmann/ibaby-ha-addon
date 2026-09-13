@@ -47,10 +47,12 @@ if [ "${INSTALLED_VERSION}" != "${PYIBABY_VERSION}" ]; then
 fi
 
 # Reinstalar (aunque sea la misma version ya horneada) pisa los ficheros
-# parcheados por patch_content_base.py / patch_stream_quality.py --
-# reaplicar siempre tras esta seccion.
+# parcheados por patch_content_base.py / patch_stream_quality.py /
+# patch_friendly_login_errors.py -- reaplicar siempre tras esta seccion, en
+# este orden (el ultimo depende del bloque que deja el anterior).
 python3 /patch_content_base.py
 python3 /patch_stream_quality.py
+python3 /patch_friendly_login_errors.py
 
 bashio::log.info "Config: host=0.0.0.0 puerto=${RTSP_PORT} path=/${STREAM_NAME} calidad=${STREAM_QUALITY:-(sin forzar)} pyibaby=${PYIBABY_VERSION} sensores=${SENSORS_ENABLED} ptz=${PTZ_ENABLED}"
 

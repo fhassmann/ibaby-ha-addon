@@ -51,13 +51,22 @@ NEW = '''    ap.add_argument("--no-talk", action="store_true", help="disable the
         _log(f"stream quality set to {args.quality}")
     source = CameraSource(lan, audio=not args.no_audio)'''
 
+# Marcador de idempotencia MAS ESPECIFICO que el bloque NEW completo: un
+# patch posterior (patch_friendly_login_errors.py) reescribe el entorno de
+# ese bloque (envuelve resolve_camera/connect en un try/except), asi que
+# "NEW in src" deja de ser cierto en cuanto ese otro patch se aplica --
+# aunque el flag --quality siga funcionando perfectamente. Comprobar solo
+# esta linea (que ningun otro patch toca) evita un falso "AVISO: no
+# parcheado" en cada arranque normal del addon a partir de ahi.
+QUALITY_FLAG_MARKER = 'help="live-stream preset from pyibaby.protocol.STREAM_PRESETS (1080p, 720p, 720p_eco, 360p, tiny)",'
+
 
 def main() -> int:
     path = inspect.getfile(rtspd)
     with open(path, "r", encoding="utf-8") as f:
         src = f.read()
 
-    if NEW in src:
+    if QUALITY_FLAG_MARKER in src:
         print(f"[patch_stream_quality] {path}: ya parcheado, nada que hacer")
         return 0
 

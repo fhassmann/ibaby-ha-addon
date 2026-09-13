@@ -201,7 +201,11 @@ def main() -> int:
         log("sensores y PTZ desactivados por opciones -- nada que hacer, saliendo")
         return 0
 
-    lan = connect_camera()
+    try:
+        lan = connect_camera()
+    except Exception as e:
+        log(f"no se pudo conectar con la camara ({e}) -- revisa ibaby_email/ibaby_password en la configuracion del addon")
+        return 1
 
     privacy_supported = False
     if PTZ_ENABLED:

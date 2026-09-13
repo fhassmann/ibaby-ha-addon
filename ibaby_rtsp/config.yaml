@@ -1,5 +1,5 @@
 name: "iBaby RTSP Bridge"
-version: "0.2.7"
+version: "0.2.8"
 slug: ibaby_rtsp
 description: >-
   Puente RTSP en Python puro para cámaras iBaby M6S (protocolo P2P/PPPP de
