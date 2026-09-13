@@ -8,7 +8,7 @@ RUN apk add --no-cache python3 py3-pip
 # run.sh reinstala en caliente si el usuario configura otra version
 # distinta via la opcion pyibaby_version (sin reconstruir la imagen).
 ARG PYIBABY_VERSION=0.1.8
-RUN pip3 install --no-cache-dir --break-system-packages "pyibaby==${PYIBABY_VERSION}"
+RUN pip3 install --no-cache-dir --break-system-packages "pyibaby==${PYIBABY_VERSION}" paho-mqtt
 
 # Fix de un bug de pyibaby (Content-Base sin puerto en el DESCRIBE RTSP, ver
 # patch_content_base.py) -- se reaplica tambien en run.sh tras cualquier
@@ -16,6 +16,7 @@ RUN pip3 install --no-cache-dir --break-system-packages "pyibaby==${PYIBABY_VERS
 COPY patch_content_base.py /
 RUN python3 /patch_content_base.py
 
+COPY control_bridge.py /
 COPY run.sh /
 RUN chmod a+x /run.sh
 

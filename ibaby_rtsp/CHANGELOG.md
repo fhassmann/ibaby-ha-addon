@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0
+
+- **Nuevo: sensores ambientales y PTZ vía MQTT.** La cámara empuja
+  temperatura/humedad/CO2/VOC cada ~5s y soporta movimiento PTZ + modo
+  privacidad, funciones que `pyibaby.rtspd` no expone. Nuevo proceso
+  `control_bridge.py` (abre su propia sesión P2P, en paralelo a la de vídeo
+  — el hardware soporta 2 sesiones concurrentes) que publica entidades en HA
+  vía MQTT Discovery:
+  - `sensor.ibaby_temperatura`, `sensor.ibaby_humedad`, `sensor.ibaby_co2`,
+    `sensor.ibaby_voc`
+  - `button.ibaby_ptz_arriba/abajo/izquierda/derecha`
+  - `switch.ibaby_modo_privacidad` (con sincronización del estado real,
+    también si se cambia desde la app oficial de iBaby)
+- Nuevas opciones `sensors_enabled` / `ptz_enabled` (activadas por defecto,
+  desactivables por separado).
+- Requiere la integración MQTT en HA (`services: mqtt:want` — si no está
+  disponible, el addon avisa por log y sigue sirviendo vídeo con
+  normalidad, sin fallar el arranque).
+- Reproductor de música y luz de proyector quedan fuera de esta versión
+  (ver doc del repo de configuración de HA, sección de mejoras
+  potenciales).
+
 ## 0.1.4
 
 - Mejoras de log para depuración, motivadas por lo que costó diagnosticar el

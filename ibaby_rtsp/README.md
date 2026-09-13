@@ -25,6 +25,24 @@ streaming (solo para el login inicial).
 | `rtsp_port` | Puerto RTSP a exponer | `8554` |
 | `stream_name` | Nombre del path RTSP (`/nombre`) | `ibaby` |
 | `pyibaby_version` | Versión de `pyibaby` a usar (PyPI) | `0.1.8` |
+| `sensors_enabled` | Publica temperatura/humedad/CO2/VOC por MQTT | `true` |
+| `ptz_enabled` | Publica botones PTZ y el switch de privacidad por MQTT | `true` |
+
+`sensors_enabled`/`ptz_enabled` necesitan la integración **MQTT** en Home
+Assistant. Si no está disponible, el addon avisa por log y sigue sirviendo
+vídeo con normalidad — no falla el arranque.
+
+## Sensores y PTZ (opcional, vía MQTT)
+
+Si `sensors_enabled`/`ptz_enabled` están activos y hay MQTT configurado en HA,
+aparecen automáticamente (MQTT Discovery, sin configuración adicional):
+
+- `sensor.ibaby_temperatura`, `sensor.ibaby_humedad`, `sensor.ibaby_co2`,
+  `sensor.ibaby_voc` — telemetría que la propia cámara empuja cada ~5s.
+- `button.ibaby_ptz_arriba/abajo/izquierda/derecha` — movimiento PTZ.
+- `switch.ibaby_modo_privacidad` — apunta la cámara hacia abajo / la
+  restaura; el estado se sincroniza también si se cambia desde la app
+  oficial de iBaby.
 
 ## Añadir la cámara en Home Assistant
 
