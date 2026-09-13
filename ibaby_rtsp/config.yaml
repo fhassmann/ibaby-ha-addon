@@ -1,5 +1,5 @@
 name: "iBaby RTSP Bridge"
-version: "0.2.6"
+version: "0.2.7"
 slug: ibaby_rtsp
 description: >-
   Puente RTSP en Python puro para cámaras iBaby M6S (protocolo P2P/PPPP de
@@ -32,6 +32,7 @@ options:
   ibaby_password: ""
   rtsp_port: 8554
   stream_name: "ibaby"
+  stream_quality: "360p"
   pyibaby_version: "0.1.8"
   sensors_enabled: true
   ptz_enabled: true
@@ -44,6 +45,14 @@ schema:
   ibaby_password: password
   rtsp_port: port
   stream_name: str
+  # Perfil de resolucion/bitrate/fps pedido a la camara (cmd nativo
+  # IBABY_SET_STREAMCFG, via pyibaby.rtspd --quality, ver
+  # patch_stream_quality.py). Afecta al encoder de la camara en global,
+  # no solo a este addon. "" = no forzar nada (deja la camara en el
+  # ultimo perfil que tuviera). Pensado para cortes de video ("paron")
+  # por conexion remota con poco ancho de banda: bajar de 360p a tiny,
+  # o subir a 720p/1080p si se ve en LAN con buena conexion.
+  stream_quality: "list(1080p|720p|720p_eco|360p|tiny)?"
   pyibaby_version: str
   sensors_enabled: bool
   ptz_enabled: bool

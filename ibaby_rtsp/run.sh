@@ -14,6 +14,7 @@ IBABY_EMAIL=$(bashio::config 'ibaby_email')
 IBABY_PASSWORD=$(bashio::config 'ibaby_password')
 RTSP_PORT=$(bashio::config 'rtsp_port')
 STREAM_NAME=$(bashio::config 'stream_name')
+STREAM_QUALITY=$(bashio::config 'stream_quality')
 PYIBABY_VERSION=$(bashio::config 'pyibaby_version')
 SENSORS_ENABLED=$(bashio::config 'sensors_enabled')
 PTZ_ENABLED=$(bashio::config 'ptz_enabled')
@@ -45,11 +46,13 @@ if [ "${INSTALLED_VERSION}" != "${PYIBABY_VERSION}" ]; then
     fi
 fi
 
-# Reinstalar (aunque sea la misma version ya horneada) pisa el fichero
-# parcheado por patch_content_base.py -- reaplicar siempre tras esta seccion.
+# Reinstalar (aunque sea la misma version ya horneada) pisa los ficheros
+# parcheados por patch_content_base.py / patch_stream_quality.py --
+# reaplicar siempre tras esta seccion.
 python3 /patch_content_base.py
+python3 /patch_stream_quality.py
 
-bashio::log.info "Config: host=0.0.0.0 puerto=${RTSP_PORT} path=/${STREAM_NAME} pyibaby=${PYIBABY_VERSION} sensores=${SENSORS_ENABLED} ptz=${PTZ_ENABLED}"
+bashio::log.info "Config: host=0.0.0.0 puerto=${RTSP_PORT} path=/${STREAM_NAME} calidad=${STREAM_QUALITY:-(sin forzar)} pyibaby=${PYIBABY_VERSION} sensores=${SENSORS_ENABLED} ptz=${PTZ_ENABLED}"
 
 # Sensores/PTZ necesitan un broker MQTT para publicar entidades en HA.
 # Prioridad: 1) mqtt_host configurado a mano en las opciones (desacopla el
@@ -118,9 +121,11 @@ trap terminate TERM INT
 rtspd_loop() {
     local retry_delay=10
     local max_retry_delay=300
+    local quality_args=()
+    [ -n "${STREAM_QUALITY}" ] && quality_args=(--quality "${STREAM_QUALITY}")
     while true; do
         local start_ts=$(date +%s)
-        python3 -u -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" \
+        python3 -u -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" "${quality_args[@]}" \
             > >(while IFS= read -r line; do echo "$(date '+%H:%M:%S') ${line}"; done) 2>&1 &
         echo $! > "${RTSPD_PIDFILE}"
         local exit_code=0

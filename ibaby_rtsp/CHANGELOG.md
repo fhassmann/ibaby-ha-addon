@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.7
+
+- **Nueva opción `stream_quality`** para bajar la resolución/bitrate del
+  vídeo pedidos a la cámara (comando nativo `IBABY_SET_STREAMCFG`, ya
+  soportado por `pyibaby` vía `LANCamera.set_quality()` pero no expuesto
+  por el CLI de `pyibaby.rtspd`). Pensado para conexiones remotas con poco
+  ancho de banda, donde el stream a resolución completa produce cortes
+  ("parón") — presets disponibles: `1080p`, `720p`, `720p_eco`, `360p`,
+  `tiny`; vacío = no forzar nada. Default `360p` (640x368, 256 kbps).
+  Añadido `patch_stream_quality.py` (mismo patrón que
+  `patch_content_base.py`: parchea `rtspd.py` sobre la instalación de
+  `pyibaby` ya hecha, idempotente, no rompe el arranque si una futura
+  versión de la librería cambia el código).
+- El cambio de calidad afecta al encoder de la cámara **globalmente**
+  (cualquier visor, no solo este add-on) y tarda hasta el siguiente
+  keyframe en aplicarse.
+
 ## 0.2.6
 
 - **Validado en real (M6S física del usuario): los 4 botones PTZ mueven la

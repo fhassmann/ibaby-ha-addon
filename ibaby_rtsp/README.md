@@ -24,6 +24,7 @@ streaming (solo para el login inicial).
 | `ibaby_password` | Contraseña de tu cuenta iBaby | — |
 | `rtsp_port` | Puerto RTSP a exponer | `8554` |
 | `stream_name` | Nombre del path RTSP (`/nombre`) | `ibaby` |
+| `stream_quality` | Perfil de resolución/bitrate pedido a la cámara: `1080p`, `720p`, `720p_eco`, `360p`, `tiny`, o vacío para no forzar nada. Baja esto si el vídeo se corta por poco ancho de banda (conexión remota) | `360p` |
 | `pyibaby_version` | Versión de `pyibaby` a usar (PyPI) | `0.1.8` |
 | `sensors_enabled` | Publica temperatura/humedad/CO2/VOC por MQTT | `true` |
 | `ptz_enabled` | Publica botones PTZ y el switch de privacidad por MQTT | `true` |
