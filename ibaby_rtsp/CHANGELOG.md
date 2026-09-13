@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.9
+
+- Quitado el `DeprecationWarning: Callback API version 1 is deprecated` que
+  `paho-mqtt` (≥2.0) mostraba en cada arranque de `control_bridge.py`.
+  Fix: `mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, ...)` explícito.
+  Este addon solo registra `on_message`, cuya firma no cambia entre
+  VERSION1/VERSION2 — migración segura, sin tocar `make_on_message`.
+
 ## 0.2.8
 
 - **Errores de login/conexión legibles, sin traceback.** Motivado por un

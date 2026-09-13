@@ -212,7 +212,13 @@ def main() -> int:
         privacy_supported = probe_privacy_support(lan)
         log(f"modo privacidad: {'soportado' if privacy_supported else 'NO soportado por esta camara -- switch no publicado'}")
 
-    client = mqtt.Client(client_id=f"{DEVICE_ID}_control_bridge")
+    # callback_api_version explicito (paho-mqtt >= 2.0): sin esto, paho usa
+    # VERSION1 por defecto con un DeprecationWarning en cada arranque. VERSION2
+    # cambia la firma de on_connect/on_disconnect/on_publish/on_subscribe (anaden
+    # reason_code/properties), pero este addon solo registra on_message, cuya
+    # firma (client, userdata, message) no cambia entre versiones -- migracion
+    # segura sin tocar make_on_message.
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"{DEVICE_ID}_control_bridge")
     if MQTT_USERNAME:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.will_set(AVAILABILITY_TOPIC, "offline", retain=True)
