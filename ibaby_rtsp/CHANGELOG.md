@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.5
+
+- **Fix**: las entidades aparecían en HA con `entity_id` largo y
+  redundante (`sensor.ibaby_m6s_ibaby_temperatura` en vez de
+  `sensor.ibaby_temperatura`). Causa: usaba el campo `object_id` en el
+  payload de MQTT Discovery pensando que fijaba el `entity_id` — verificado
+  contra la documentación oficial, **no es así**: `object_id` solo afecta
+  al topic de discovery, el campo que realmente fija el `entity_id` es
+  `default_entity_id` (con el dominio incluido, ej. `sensor.ibaby_temperatura`).
+  **Solo aplica a entidades nuevas** — las ya creadas con el `entity_id`
+  largo no se renombran solas (mismo `unique_id`): hay que borrarlas a mano
+  (o borrar el dispositivo "iBaby M6S (...)" entero desde Settings →
+  Devices & Services, que se lleva las 6 entidades de golpe) para que se
+  recreen con el nombre correcto en el siguiente ciclo de discovery.
+
 ## 0.2.4
 
 - **Fix crítico**: el bucle de reintento (backoff exponencial de la

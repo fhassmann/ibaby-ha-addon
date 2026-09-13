@@ -90,22 +90,28 @@ def connect_camera() -> LANCamera:
     raise last_error or RuntimeError("no se pudo conectar tras 3 intentos")
 
 
-def _base_cfg(object_id: str, name: str) -> dict:
+def _base_cfg(domain: str, object_id: str, name: str) -> dict:
     """Campos comunes a toda entidad MQTT Discovery de este addon.
 
     has_entity_name=True: el nombre visible final lo compone HA como
     "<nombre del device> <name>" (ej. "iBaby M6S (ibaby) Temperatura"), en
-    vez de tener que repetir "iBaby" a mano en cada entidad. object_id fija
-    el entity_id de forma deterministica (ej. sensor.<stream_name>_temperatura)
-    -- sin esto, HA lo derivaria del "name" y dos camaras con stream_name
-    distinto podrian colisionar en el nombre visible sin colisionar en el
-    entity_id, o viceversa.
+    vez de tener que repetir "iBaby" a mano en cada entidad.
+
+    default_entity_id (NO "object_id" -- probado en real: "object_id" en el
+    payload de discovery no influye en el entity_id resultante, solo en el
+    topic de discovery; el campo que si lo fija es default_entity_id, con el
+    dominio incluido) fija el entity_id de forma deterministica (ej.
+    sensor.<stream_name>_temperatura) -- sin esto, HA lo deriva del "name" +
+    nombre del device combinados y da algo largo y redundante
+    (sensor.ibaby_m6s_ibaby_temperatura). Solo aplica la PRIMERA vez que se
+    crea la entidad (mismo unique_id) -- un cambio posterior no renombra una
+    entidad ya existente, hay que borrarla a mano para que se recree.
     """
     return {
         "name": name,
         "has_entity_name": True,
-        "object_id": object_id,
         "unique_id": object_id,
+        "default_entity_id": f"{domain}.{object_id}",
         "availability_topic": AVAILABILITY_TOPIC,
         "device": DEVICE_INFO,
     }
@@ -121,7 +127,7 @@ def publish_discovery(client: mqtt.Client) -> None:
         ]
         for key, name, unit, device_class in sensors:
             object_id = f"{DEVICE_ID}_{key}"
-            cfg = _base_cfg(object_id, name)
+            cfg = _base_cfg("sensor", object_id, name)
             cfg["state_topic"] = f"{BASE_TOPIC}/sensor/{key}/state"
             if unit:
                 cfg["unit_of_measurement"] = unit
@@ -133,12 +139,12 @@ def publish_discovery(client: mqtt.Client) -> None:
     if PTZ_ENABLED:
         for key, label in [("arriba", "Arriba"), ("abajo", "Abajo"), ("izquierda", "Izquierda"), ("derecha", "Derecha")]:
             object_id = f"{DEVICE_ID}_ptz_{key}"
-            cfg = _base_cfg(object_id, f"PTZ {label}")
+            cfg = _base_cfg("button", object_id, f"PTZ {label}")
             cfg["command_topic"] = f"{BASE_TOPIC}/button/ptz_{key}/set"
             client.publish(f"homeassistant/button/{object_id}/config", json.dumps(cfg), retain=True)
 
         object_id = f"{DEVICE_ID}_privacy"
-        cfg = _base_cfg(object_id, "Modo privacidad")
+        cfg = _base_cfg("switch", object_id, "Modo privacidad")
         cfg["command_topic"] = f"{BASE_TOPIC}/switch/privacy/set"
         cfg["state_topic"] = f"{BASE_TOPIC}/switch/privacy/state"
         cfg["payload_on"] = "ON"
