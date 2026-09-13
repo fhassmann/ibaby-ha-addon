@@ -1,5 +1,5 @@
 name: "iBaby RTSP Bridge"
-version: "0.2.0"
+version: "0.2.1"
 slug: ibaby_rtsp
 description: >-
   Puente RTSP en Python puro para cámaras iBaby M6S (protocolo P2P/PPPP de
@@ -35,6 +35,10 @@ options:
   pyibaby_version: "0.1.8"
   sensors_enabled: true
   ptz_enabled: true
+  mqtt_host: ""
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
 schema:
   ibaby_email: str
   ibaby_password: password
@@ -43,3 +47,12 @@ schema:
   pyibaby_version: str
   sensors_enabled: bool
   ptz_enabled: bool
+  # Opcionales: si se dejan vacios, run.sh cae automaticamente al MQTT que
+  # ya tenga HA via Supervisor (services: mqtt:want, mas abajo). Rellenarlos
+  # desacopla el addon de esa integracion concreta -- necesario para
+  # compartirlo publicamente o usarlo contra un broker que no sea el de
+  # Supervisor.
+  mqtt_host: "str?"
+  mqtt_port: "port?"
+  mqtt_username: "str?"
+  mqtt_password: "password?"

@@ -27,10 +27,17 @@ streaming (solo para el login inicial).
 | `pyibaby_version` | Versión de `pyibaby` a usar (PyPI) | `0.1.8` |
 | `sensors_enabled` | Publica temperatura/humedad/CO2/VOC por MQTT | `true` |
 | `ptz_enabled` | Publica botones PTZ y el switch de privacidad por MQTT | `true` |
+| `mqtt_host` | Host del broker MQTT (opcional) | — |
+| `mqtt_port` | Puerto del broker MQTT (opcional) | `1883` |
+| `mqtt_username` | Usuario del broker MQTT (opcional) | — |
+| `mqtt_password` | Contraseña del broker MQTT (opcional) | — |
 
-`sensors_enabled`/`ptz_enabled` necesitan la integración **MQTT** en Home
-Assistant. Si no está disponible, el addon avisa por log y sigue sirviendo
-vídeo con normalidad — no falla el arranque.
+`sensors_enabled`/`ptz_enabled` necesitan un broker **MQTT**. Si dejas
+`mqtt_host` vacío, el addon usa automáticamente la integración MQTT que ya
+tengas configurada en HA (vía el servicio de Supervisor); si lo rellenas, se
+conecta ahí directamente — útil si quieres desacoplarlo de esa integración o
+apuntar a otro broker. Si no hay ninguna de las dos cosas, el addon avisa
+por log y sigue sirviendo vídeo con normalidad — no falla el arranque.
 
 ## Sensores y PTZ (opcional, vía MQTT)
 

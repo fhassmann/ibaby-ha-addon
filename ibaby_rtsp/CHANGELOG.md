@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1
+
+- MQTT desacoplado de la integración MQTT concreta de esta instalación:
+  nuevas opciones `mqtt_host` / `mqtt_port` / `mqtt_username` /
+  `mqtt_password` (todas opcionales). Si se rellenan, se usan tal cual; si
+  se dejan vacías, sigue funcionando como en 0.2.0 (autodescubrimiento vía
+  el servicio MQTT de Supervisor). Útil para compartir el addon
+  públicamente o apuntarlo a un broker que no sea el gestionado por
+  Supervisor.
+
 ## 0.2.0
 
 - **Nuevo: sensores ambientales y PTZ vía MQTT.** La cámara empuja

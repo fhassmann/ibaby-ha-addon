@@ -7,6 +7,10 @@ STREAM_NAME=$(bashio::config 'stream_name')
 PYIBABY_VERSION=$(bashio::config 'pyibaby_version')
 SENSORS_ENABLED=$(bashio::config 'sensors_enabled')
 PTZ_ENABLED=$(bashio::config 'ptz_enabled')
+MQTT_HOST_OPT=$(bashio::config 'mqtt_host')
+MQTT_PORT_OPT=$(bashio::config 'mqtt_port')
+MQTT_USERNAME_OPT=$(bashio::config 'mqtt_username')
+MQTT_PASSWORD_OPT=$(bashio::config 'mqtt_password')
 
 export IBABY_EMAIL
 export IBABY_PASSWORD
@@ -36,19 +40,31 @@ python3 /patch_content_base.py
 
 bashio::log.info "Config: host=0.0.0.0 puerto=${RTSP_PORT} path=/${STREAM_NAME} pyibaby=${PYIBABY_VERSION} sensores=${SENSORS_ENABLED} ptz=${PTZ_ENABLED}"
 
-# Sensores/PTZ necesitan MQTT para publicar entidades en HA (services: mqtt:want
-# en config.yaml -- "want", no "need": si no hay integracion MQTT, el addon
-# sigue sirviendo video con normalidad, solo se desactivan estas dos opciones
-# con un aviso en vez de fallar el arranque entero).
+# Sensores/PTZ necesitan un broker MQTT para publicar entidades en HA.
+# Prioridad: 1) mqtt_host configurado a mano en las opciones (desacopla el
+# addon de la integracion MQTT concreta de esta instalacion -- necesario
+# para compartirlo publicamente o apuntar a otro broker); 2) si se deja
+# vacio, autodescubrimiento via el servicio MQTT de Supervisor (services:
+# mqtt:want en config.yaml). Si no hay ninguna de las dos, sensores/PTZ se
+# desactivan con un aviso -- el video no se ve afectado, no bloquea el
+# arranque.
 if [ "${SENSORS_ENABLED}" = "true" ] || [ "${PTZ_ENABLED}" = "true" ]; then
-    if bashio::services.available 'mqtt'; then
+    if [ -n "${MQTT_HOST_OPT}" ]; then
+        bashio::log.info "MQTT: usando configuracion manual (mqtt_host=${MQTT_HOST_OPT})."
+        export MQTT_HOST="${MQTT_HOST_OPT}"
+        export MQTT_PORT="${MQTT_PORT_OPT:-1883}"
+        export MQTT_USERNAME="${MQTT_USERNAME_OPT}"
+        export MQTT_PASSWORD="${MQTT_PASSWORD_OPT}"
+        BRIDGE_ENABLED=true
+    elif bashio::services.available 'mqtt'; then
+        bashio::log.info "MQTT: autodetectado via el servicio de Supervisor."
         export MQTT_HOST=$(bashio::services 'mqtt' 'host')
         export MQTT_PORT=$(bashio::services 'mqtt' 'port')
         export MQTT_USERNAME=$(bashio::services 'mqtt' 'username')
         export MQTT_PASSWORD=$(bashio::services 'mqtt' 'password')
         BRIDGE_ENABLED=true
     else
-        bashio::log.warning "Servicio MQTT no disponible -- sensores/PTZ desactivados (video no se ve afectado). Instala/activa la integracion MQTT en HA para usarlos."
+        bashio::log.warning "MQTT no configurado (ni mqtt_host ni servicio de Supervisor) -- sensores/PTZ desactivados (video no se ve afectado)."
         BRIDGE_ENABLED=false
     fi
 else
