@@ -59,7 +59,7 @@ RETRY_DELAY=10
 MAX_RETRY_DELAY=300
 while true; do
     start_ts=$(date +%s)
-    python3 -m pyibaby.rtspd --port "${RTSP_PORT}" --path "/${STREAM_NAME}" &
+    python3 -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" &
     CHILD_PID=$!
     wait "${CHILD_PID}"
     exit_code=$?
