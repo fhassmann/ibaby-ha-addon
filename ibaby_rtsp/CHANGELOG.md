@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.3
+
+- El nombre **visible** de las entidades (no solo el topic/unique_id, ya
+  corregido en 0.2.2) también depende ahora de `stream_name`: se usa
+  `has_entity_name` + `object_id` explícito, así que el `entity_id` queda
+  determinista (`sensor.<stream_name>_temperatura`, etc.) y el nombre
+  visible lo compone HA como "<nombre del dispositivo> <nombre corto>"
+  (ej. "iBaby M6S (ibaby) Temperatura") en vez de tener "iBaby" repetido a
+  mano en cada entidad, sin relación con `stream_name`. Evita colisión de
+  nombres si algún día hay dos cámaras con `stream_name` distinto.
+
 ## 0.2.2
 
 - Los topics MQTT y el `unique_id`/nombre de dispositivo de `control_bridge.py`

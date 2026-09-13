@@ -76,51 +76,60 @@ def connect_camera() -> LANCamera:
     return lan
 
 
+def _base_cfg(object_id: str, name: str) -> dict:
+    """Campos comunes a toda entidad MQTT Discovery de este addon.
+
+    has_entity_name=True: el nombre visible final lo compone HA como
+    "<nombre del device> <name>" (ej. "iBaby M6S (ibaby) Temperatura"), en
+    vez de tener que repetir "iBaby" a mano en cada entidad. object_id fija
+    el entity_id de forma deterministica (ej. sensor.<stream_name>_temperatura)
+    -- sin esto, HA lo derivaria del "name" y dos camaras con stream_name
+    distinto podrian colisionar en el nombre visible sin colisionar en el
+    entity_id, o viceversa.
+    """
+    return {
+        "name": name,
+        "has_entity_name": True,
+        "object_id": object_id,
+        "unique_id": object_id,
+        "availability_topic": AVAILABILITY_TOPIC,
+        "device": DEVICE_INFO,
+    }
+
+
 def publish_discovery(client: mqtt.Client) -> None:
     if SENSORS_ENABLED:
         sensors = [
-            ("temperatura", "°C", "temperature"),
-            ("humedad", "%", "humidity"),
-            ("co2", "ppm", "carbon_dioxide"),
-            ("voc", None, None),
+            ("temperatura", "Temperatura", "°C", "temperature"),
+            ("humedad", "Humedad", "%", "humidity"),
+            ("co2", "CO2", "ppm", "carbon_dioxide"),
+            ("voc", "VOC", None, None),
         ]
-        for key, unit, device_class in sensors:
-            cfg = {
-                "name": f"iBaby {key.capitalize()}",
-                "unique_id": f"{DEVICE_ID}_{key}",
-                "state_topic": f"{BASE_TOPIC}/sensor/{key}/state",
-                "availability_topic": AVAILABILITY_TOPIC,
-                "device": DEVICE_INFO,
-            }
+        for key, name, unit, device_class in sensors:
+            object_id = f"{DEVICE_ID}_{key}"
+            cfg = _base_cfg(object_id, name)
+            cfg["state_topic"] = f"{BASE_TOPIC}/sensor/{key}/state"
             if unit:
                 cfg["unit_of_measurement"] = unit
             if device_class:
                 cfg["device_class"] = device_class
                 cfg["state_class"] = "measurement"
-            client.publish(f"homeassistant/sensor/{DEVICE_ID}_{key}/config", json.dumps(cfg), retain=True)
+            client.publish(f"homeassistant/sensor/{object_id}/config", json.dumps(cfg), retain=True)
 
     if PTZ_ENABLED:
-        for key in PTZ_DIRECTIONS:
-            cfg = {
-                "name": f"iBaby PTZ {key}",
-                "unique_id": f"{DEVICE_ID}_ptz_{key}",
-                "command_topic": f"{BASE_TOPIC}/button/ptz_{key}/set",
-                "availability_topic": AVAILABILITY_TOPIC,
-                "device": DEVICE_INFO,
-            }
-            client.publish(f"homeassistant/button/{DEVICE_ID}_ptz_{key}/config", json.dumps(cfg), retain=True)
+        for key, label in [("arriba", "Arriba"), ("abajo", "Abajo"), ("izquierda", "Izquierda"), ("derecha", "Derecha")]:
+            object_id = f"{DEVICE_ID}_ptz_{key}"
+            cfg = _base_cfg(object_id, f"PTZ {label}")
+            cfg["command_topic"] = f"{BASE_TOPIC}/button/ptz_{key}/set"
+            client.publish(f"homeassistant/button/{object_id}/config", json.dumps(cfg), retain=True)
 
-        cfg = {
-            "name": "iBaby Modo privacidad",
-            "unique_id": f"{DEVICE_ID}_privacy",
-            "command_topic": f"{BASE_TOPIC}/switch/privacy/set",
-            "state_topic": f"{BASE_TOPIC}/switch/privacy/state",
-            "payload_on": "ON",
-            "payload_off": "OFF",
-            "availability_topic": AVAILABILITY_TOPIC,
-            "device": DEVICE_INFO,
-        }
-        client.publish(f"homeassistant/switch/{DEVICE_ID}_privacy/config", json.dumps(cfg), retain=True)
+        object_id = f"{DEVICE_ID}_privacy"
+        cfg = _base_cfg(object_id, "Modo privacidad")
+        cfg["command_topic"] = f"{BASE_TOPIC}/switch/privacy/set"
+        cfg["state_topic"] = f"{BASE_TOPIC}/switch/privacy/state"
+        cfg["payload_on"] = "ON"
+        cfg["payload_off"] = "OFF"
+        client.publish(f"homeassistant/switch/{object_id}/config", json.dumps(cfg), retain=True)
 
 
 def make_on_message(lan: LANCamera):
