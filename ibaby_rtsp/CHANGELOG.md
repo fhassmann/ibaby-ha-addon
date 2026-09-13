@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.4
+
+- Mejoras de log para depuración, motivadas por lo que costó diagnosticar el
+  incidente de la 0.1.2→0.1.3:
+  - Cada línea de `pyibaby.rtspd` (`[rtspd] ...`) lleva ahora hora
+    (`HH:MM:SS`) delante, igual que las líneas de `bashio::log.*` — antes no
+    la llevaba, y distinguir un log pegado reciente de uno de horas antes
+    era ambiguo.
+  - Línea única al arranque con la configuración efectiva (host, puerto,
+    path, versión de `pyibaby`), sin credenciales.
+- Recordatorio (sin cambio de código): los reinicios del propio contenedor
+  forzados por Supervisor/Docker desde fuera (ej. el bug del watchdog de la
+  0.1.2) **nunca aparecen en el log del addon** — solo en el log del
+  Supervisor (`docker logs hassio_supervisor`, filtrando por `ibaby`).
+
 ## 0.1.3
 
 - **Fix crítico**: el watchdog añadido en 0.1.2 provocaba un bucle de

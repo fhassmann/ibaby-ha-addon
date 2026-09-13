@@ -30,7 +30,7 @@ fi
 # parcheado por patch_content_base.py -- reaplicar siempre tras esta seccion.
 python3 /patch_content_base.py
 
-bashio::log.info "Arrancando pyibaby.rtspd en el puerto ${RTSP_PORT}, path /${STREAM_NAME}"
+bashio::log.info "Config: host=0.0.0.0 puerto=${RTSP_PORT} path=/${STREAM_NAME} pyibaby=${PYIBABY_VERSION}"
 
 # Apagado limpio: al parar el addon, Supervisor manda SIGTERM a este script.
 # Sin reenviarla explicitamente al proceso Python hijo, el contenedor tarda
@@ -55,11 +55,19 @@ trap terminate TERM INT
 # una sesion aguanta al menos 60s antes de caer, se asume que funcionaba y el
 # backoff se resetea al valor base. El Watchdog de HA (config.yaml) es la red
 # de seguridad adicional si el proceso queda colgado sin llegar a salir.
+# pyibaby.rtspd no antepone hora a sus propias lineas ([rtspd] connected to...),
+# a diferencia de bashio::log.* -- costo confusion real diagnosticando un
+# incidente (no se podia saber si un log pegado era de ahora o de horas antes).
+# PYTHONUNBUFFERED=1 + la sustitucion de proceso de abajo le anteponen hora a
+# cada linea sin perder CHILD_PID (necesario para el apagado limpio de arriba).
+export PYTHONUNBUFFERED=1
+
 RETRY_DELAY=10
 MAX_RETRY_DELAY=300
 while true; do
     start_ts=$(date +%s)
-    python3 -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" &
+    python3 -u -m pyibaby.rtspd --host 0.0.0.0 --port "${RTSP_PORT}" --path "/${STREAM_NAME}" \
+        > >(while IFS= read -r line; do echo "$(date '+%H:%M:%S') ${line}"; done) 2>&1 &
     CHILD_PID=$!
     wait "${CHILD_PID}"
     exit_code=$?
